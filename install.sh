@@ -8,7 +8,7 @@ sudo yum -y update
 sudo yum -y install python2-pip
 sudo pip install ansible==2.8.7
 
-cd /tmp/ansible && sudo ansible-playbook --connection=local -i "localhost," \
+cd /tmp/traccar-aws && sudo ansible-playbook --connection=local -i "localhost," \
                                          -e "SUBDOMAIN=${SUBDOMAIN}" \
                                          -e "DOMAIN=${DOMAIN}" \
                                          -e "EMAIL=${EMAIL}" \
