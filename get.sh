@@ -1,8 +1,11 @@
-#!/bin/bash -xe
+#!/bin/bash -e
 
-SUBDOMAIN="gps"
-DOMAIN="example.com"
-EMAIL="john@example.com"
+echo -n "Subdomain: "
+read SUBDOMAIN
+echo -n "Domain: "
+read DOMAIN
+echo -n "Email: "
+read EMAIL
 
 yum -y install git
 
