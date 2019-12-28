@@ -1,78 +1,10 @@
 ---
 - hosts: all
 
+  vars:
+    LETSENCRYPT: "{{ lookup('env','TC_LETSENCRYPT') }}"
+
   tasks:
-  - debug:
-     msg: "Traccar installation on {{ ansible_hostname }}"
-
-  - name: checking uptime
-    become: false
-    shell: "uptime 2>&1"
-    register: uptime
-
-  - debug: msg="Server uptime is {{ uptime.stdout }}"
-
-
-  # Swap file
-  - name: Check if swap file already exists
-    become: yes
-    stat: path=/swapfile
-    register: stat_swapfile
-
-  - name: create swap file
-    become: yes
-    shell: "dd if=/dev/zero of=/swapfile bs=1M count=2048 && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile"
-    when: stat_swapfile.stat.exists == False
-
-  - name: save swap settings in fstab
-    become: yes
-    lineinfile:
-      path: /etc/fstab
-      line: "/swapfile swap swap defaults 0 0"
-
-
-  # Install packages
-  - name: Install some yum packages
-    become: yes
-    yum:
-      name:
-        - nc
-        - git
-        - python2-pip
-      state: present
-      lock_timeout: 300
-
-  - name: Install Python libraries with pip
-    become: yes
-    pip:
-      name: docker
-
-  - name: Install Docker
-    become: yes
-    shell: "amazon-linux-extras install -y docker"
-
-  - name: Enable and start Docker
-    become: yes
-    systemd:
-      name: docker
-      state: started
-      enabled: yes
-
-  - name: Add ec2-user to docker group
-    become: yes
-    user:
-      name: ec2-user
-      groups: docker
-      append: yes
-
-
-  # Run
-
-  # docker network
-  - name: Create docker network
-    become: true
-    docker_network:
-      name: traccar
 
   # Traccar container
   - name: Create /opt/traccar
@@ -94,7 +26,7 @@
       group: root
       force: yes
 
-  - name: Start traccar container
+  - name: Start traccar container (port 8082)
     become: yes
     docker_container:
       name: traccar
@@ -111,52 +43,23 @@
         - 5000-5150:5000-5150/udp
       volumes:
         - /opt/traccar/mytraccar.xml:/opt/traccar/conf/traccar.xml
+    when: LETSENCRYPT == 'true'
 
-
-  # Nginx/Letsencrypt container
-  - name: Create /opt/nginx/config/nginx/proxy-confs
-    become: true
-    file:
-      path: "/opt/nginx/config/nginx/proxy-confs"
-      state: directory
-      mode: 0755
-      owner: "1000"
-      group: "1000"
-
-  - name: Copy traccar.subdomain.conf
-    become: true
-    template:
-      src: "traccar.subdomain.conf.j2"
-      dest:  "/opt/nginx/config/nginx/proxy-confs/traccar.subdomain.conf"
-      mode: 0644
-      owner: "1000"
-      group: "1000"
-      force: yes
-
-  - name: Start nginx container
+  - name: Start traccar container (port 80)
     become: yes
     docker_container:
-      name: nginx
-      image: linuxserver/letsencrypt:1.0.0-ls78
+      name: traccar
+      image: traccar/traccar:4.6
       state: started
       recreate: yes
       restart_policy: always
       networks:
         - name: traccar
       networks_cli_compatible: yes
-      env:
-        PUID: "1000"
-        PGID: "1000"
-        TZ: "UTC"
-        URL: "{{ DOMAIN }}"
-        SUBDOMAINS: "{{ SUBDOMAIN }},"
-        VALIDATION: "http"
-        EMAIL: "{{ EMAIL }}"
-        DHLEVEL: "2048"
-        ONLY_SUBDOMAINS: "true"
-        STAGING: "false"
       ports:
-        - 80:80
-        - 443:443
+        - 80:8082
+        - 5000-5150:5000-5150
+        - 5000-5150:5000-5150/udp
       volumes:
-        - /opt/nginx/config:/config
+        - /opt/traccar/mytraccar.xml:/opt/traccar/conf/traccar.xml
+    when: LETSENCRYPT == 'false'

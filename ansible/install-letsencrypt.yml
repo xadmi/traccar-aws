@@ -1,0 +1,57 @@
+---
+- hosts: all
+
+  vars:
+    SUBDOMAIN: "{{ lookup('env','TC_SUBDOMAIN') }}"
+    DOMAIN: "{{ lookup('env','TC_DOMAIN') }}"
+    EMAIL: "{{ lookup('env','TC_EMAIL') }}"
+
+  tasks:
+
+  # Nginx/Letsencrypt container
+  - name: Create /opt/nginx/config/nginx/proxy-confs
+    become: true
+    file:
+      path: "/opt/nginx/config/nginx/proxy-confs"
+      state: directory
+      mode: 0755
+      owner: "1000"
+      group: "1000"
+
+  - name: Copy traccar.subdomain.conf
+    become: true
+    template:
+      src: "traccar.subdomain.conf.j2"
+      dest:  "/opt/nginx/config/nginx/proxy-confs/traccar.subdomain.conf"
+      mode: 0644
+      owner: "1000"
+      group: "1000"
+      force: yes
+
+  - name: Start nginx container
+    become: yes
+    docker_container:
+      name: nginx
+      image: linuxserver/letsencrypt:1.0.0-ls78
+      state: started
+      recreate: yes
+      restart_policy: always
+      networks:
+        - name: traccar
+      networks_cli_compatible: yes
+      env:
+        PUID: "1000"
+        PGID: "1000"
+        TZ: "UTC"
+        URL: "{{ DOMAIN }}"
+        SUBDOMAINS: "{{ SUBDOMAIN }},"
+        VALIDATION: "http"
+        EMAIL: "{{ EMAIL }}"
+        DHLEVEL: "2048"
+        ONLY_SUBDOMAINS: "true"
+        STAGING: "false"
+      ports:
+        - 80:80
+        - 443:443
+      volumes:
+        - /opt/nginx/config:/config

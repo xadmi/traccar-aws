@@ -1,14 +1,24 @@
 #!/bin/bash -e
 
-echo -n "Subdomain: "
-read SUBDOMAIN
-echo -n "Domain: "
-read DOMAIN
-echo -n "Email: "
-read EMAIL
+if [[ $1 == "--no-le" ]]; then
+  export TC_LETSENCRYPT=false
+else
+  export TC_LETSENCRYPT=true
+fi
+
+if [[ $TC_LETSENCRYPT == true ]]; then
+  if [[ -z "$TC_SUBDOMAIN" || -z "$TC_DOMAIN" || -z "$TC_EMAIL" ]]; then
+    echo -n "Subdomain: "
+    read TC_SUBDOMAIN && export TC_SUBDOMAIN
+    echo -n "Domain: "
+    read TC_DOMAIN && export TC_DOMAIN
+    echo -n "Email: "
+    read TC_EMAIL && export TC_EMAIL
+  fi
+fi
 
 yum -y install git
 
 rm -rf /tmp/traccar-aws
 git clone --depth 1 -b master https://bitbucket.org/xadmi/traccar-aws.git /tmp/traccar-aws
-cd /tmp/traccar-aws && ./install.sh ${SUBDOMAIN} ${DOMAIN} ${EMAIL}
+cd /tmp/traccar-aws && ./install.sh

@@ -1,0 +1,73 @@
+---
+- hosts: all
+
+  tasks:
+  - debug:
+     msg: "Traccar installation on {{ ansible_hostname }}"
+
+  - name: checking uptime
+    become: false
+    shell: "uptime 2>&1"
+    register: uptime
+
+  - debug: msg="Server uptime is {{ uptime.stdout }}"
+
+
+  # Swap file
+  - name: Check if swap file already exists
+    become: yes
+    stat: path=/swapfile
+    register: stat_swapfile
+
+  - name: create swap file
+    become: yes
+    shell: "dd if=/dev/zero of=/swapfile bs=1M count=2048 && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile"
+    when: stat_swapfile.stat.exists == False
+
+  - name: save swap settings in fstab
+    become: yes
+    lineinfile:
+      path: /etc/fstab
+      line: "/swapfile swap swap defaults 0 0"
+
+
+  # Install packages
+  - name: Install some yum packages
+    become: yes
+    yum:
+      name:
+        - nc
+        - git
+        - python2-pip
+      state: present
+      lock_timeout: 300
+
+  - name: Install Python libraries with pip
+    become: yes
+    pip:
+      name: docker
+
+  - name: Install Docker
+    become: yes
+    shell: "amazon-linux-extras install -y docker"
+
+  - name: Enable and start Docker
+    become: yes
+    systemd:
+      name: docker
+      state: started
+      enabled: yes
+
+  - name: Add ec2-user to docker group
+    become: yes
+    user:
+      name: ec2-user
+      groups: docker
+      append: yes
+
+
+  # common docker network
+  - name: Create docker network
+    become: true
+    docker_network:
+      name: traccar
