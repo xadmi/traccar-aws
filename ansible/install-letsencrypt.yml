@@ -48,7 +48,7 @@
         EMAIL: "{{ EMAIL }}"
         DHLEVEL: "2048"
         ONLY_SUBDOMAINS: "false"
-        STAGING: "true"
+        STAGING: "false"
       ports:
         - 80:80
         - 443:443
