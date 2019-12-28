@@ -7,9 +7,7 @@ else
 fi
 
 if [[ $TC_LETSENCRYPT == true ]]; then
-  if [[ -z "$TC_SUBDOMAIN" || -z "$TC_DOMAIN" || -z "$TC_EMAIL" ]]; then
-    echo -n "Subdomain: "
-    read TC_SUBDOMAIN && export TC_SUBDOMAIN
+  if [[ -z "$TC_DOMAIN" || -z "$TC_EMAIL" ]]; then
     echo -n "Domain: "
     read TC_DOMAIN && export TC_DOMAIN
     echo -n "Email: "

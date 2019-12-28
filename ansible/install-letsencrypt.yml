@@ -2,7 +2,6 @@
 - hosts: all
 
   vars:
-    SUBDOMAIN: "{{ lookup('env','TC_SUBDOMAIN') }}"
     DOMAIN: "{{ lookup('env','TC_DOMAIN') }}"
     EMAIL: "{{ lookup('env','TC_EMAIL') }}"
 
@@ -44,12 +43,12 @@
         PGID: "1000"
         TZ: "UTC"
         URL: "{{ DOMAIN }}"
-        SUBDOMAINS: "{{ SUBDOMAIN }},"
+        SUBDOMAINS: ""
         VALIDATION: "http"
         EMAIL: "{{ EMAIL }}"
         DHLEVEL: "2048"
-        ONLY_SUBDOMAINS: "true"
-        STAGING: "false"
+        ONLY_SUBDOMAINS: "false"
+        STAGING: "true"
       ports:
         - 80:80
         - 443:443
