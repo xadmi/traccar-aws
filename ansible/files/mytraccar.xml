@@ -24,4 +24,5 @@
     <entry key='database.password'></entry>
 
     <entry key='logger.file'>/dev/stdout</entry>
+    <entry key='logger.rotate'>false</entry>
 </properties>
